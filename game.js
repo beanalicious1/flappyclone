@@ -117,7 +117,7 @@ function gameLoop() {
 function update() {
     frames++;
     theHero.update();
-    console.log(frames);
+    //console.log(frames);
 }
 
 function render() {
