@@ -47,7 +47,7 @@ function Hero() {
         var h = currentState === states.splash ? 10 : 5; //ternary operator, basically means if currentstate is states.splash, set h to 10. If not, set it to 5. This is doubling the speed of the animation if splash is true
         this.frame += frames % h === 0 ? 1 : 0;
         this.frame %= this.animation.length;
-    }
+    };
     
     this.draw = function (renderingContext) {
         renderingContext.save(); //takes object and resets it's context, then draws again. Stops it from being weird with rotation, etc
@@ -117,7 +117,7 @@ function gameLoop() {
 function update() {
     frames++;
     theHero.update();
-    // console.log(frames);
+    console.log(frames);
 }
 
 function render() {
