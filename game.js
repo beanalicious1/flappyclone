@@ -42,8 +42,12 @@ function Hero() {
 
     this.gravity = 0.25;
     this.jumpHeight = 4.6;
+    // this.jumpCount = 2;
 
     this.jump = function () {
+        // if(this.jumpCount > 0) {
+        //
+        // }
         this.velocity = -this.jumpHeight;
     };
 
