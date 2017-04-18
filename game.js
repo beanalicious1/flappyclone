@@ -31,8 +31,8 @@ var states = {
 };
 
 function Hero() {
-    this.x = 140; //setting where character is on screen
-    this.y = 0;
+    this.x = 120; //setting where character is on screen
+    this.y = 180;
 
     this.frame = 0;
     this.velocity = 0;
@@ -43,33 +43,67 @@ function Hero() {
     this.gravity = 0.25;
     this.jumpHeight = 4.6;
 
+    this.jump = function () {
+        this.velocity = -this.jumpHeight;
+    };
+
     this.update = function() {
         var h = currentState === states.splash ? 10 : 5; //ternary operator, basically means if currentstate is states.splash, set h to 10. If not, set it to 5. This is doubling the speed of the animation if splash is true
-        this.frame += frames % h === 0 ? 1 : 0;
+        this.frame += frames % h === 0 ? 1 : 0; //these slow down the frame draw rate so the movement doesn't happen every millisecond. frames is the global one, we are slowing it down for the character
         this.frame %= this.animation.length;
+
+        if (currentState === states.splash) {
+            this.updateIdleHero();
+        }
+        else {
+            this.updatePlayingHero();
+        }
+
+
+
     };
-    
+        this.updateIdleHero = function () {
+        //this.y = 300;
+    };
+
+
+        this.updatePlayingHero = function () { //This is where you set gravity
+            this.velocity += this.gravity;
+            this.y += this.velocity;
+
+            if (this.y >= 180) {
+                this.y = 180;//the -10 accounts for empty spaces beneath the sprite. this checks to see if the character has hit the ground and they stay there
+                this.velocity = this.jumpHeight;
+            }
+
+
+
+        };
     this.draw = function (renderingContext) {
         renderingContext.save(); //takes object and resets it's context, then draws again. Stops it from being weird with rotation, etc
         renderingContext.translate(this.x, this.y); //translate is a keyword
         renderingContext.rotate(this.rotation);
 
         var h = this.animation[this.frame]; //this is what changes the frame for animation
-        link[h].draw(renderingContext, 140, 100);
+        link[h].draw(renderingContext, 20, this.y);
         // console.log("puppies");
         //pulls in link's array, chooses where to draw it on the canvas
+        renderingContext.restore();
     }
+
 
 }
 
-function main() {
+
+
+function main() { //check window size and set it
     windowSetup();
     canvasSetup();
     currentState = states.splash;
 
     document.body.appendChild(canvas);
-    loadGraphics();
-    theHero = new Hero();
+    loadGraphics(); //actually draw graphics
+    theHero = new Hero(); //declared above as a public class
 }
 
 function windowSetup() {
@@ -83,6 +117,22 @@ function windowSetup() {
         width = 400;
         height = 430;
     }
+
+    document.addEventListener("mousedown", onpress);
+}
+
+function onpress(evt){ //this is for clicking the button and having an action (jump, etc) happens
+
+    switch (currentState) {
+        case states.splash:
+            theHero.jump();
+            currentState = states.game;
+            break;
+        case states.game:
+            theHero.jump();
+            break;
+        }
+
 }
 
 function canvasSetup() {
@@ -114,13 +164,13 @@ function gameLoop() {
     window.requestAnimationFrame(gameLoop);
 }
 
-function update() {
-    frames++;
-    theHero.update();
+function update() { //game ticker, allows the clock to "count up"
+    frames++; //counter
+    theHero.update(); //updates character after input
     //console.log(frames);
 }
 
-function render() {
+function render() { //draw everything
     renderingContext.fillRect(0, 0, width, height);
     theHero.draw(renderingContext);
 }
