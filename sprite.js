@@ -2,6 +2,8 @@
  * Created by i57698 on 4/10/17.
  */
 var link;
+var backgroundSprite;
+var octoRokSprite;
 //var ganon;
 
 function Sprite(img, x, y, width, height) {
@@ -24,4 +26,8 @@ function initSprites(img) {
         new Sprite(img, 45, 0, 45, 55),
         new Sprite(img, 90, 0, 45, 55)
     ];
+
+    backgroundSprite = new Sprite(img, 200, 0, 400, 250);
+
+    octoRokSprite = new Sprite(img, 0, 60, 45, 35);
 }

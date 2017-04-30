@@ -19,9 +19,70 @@ var currentState,
     renderingContext,
     canvas,
     width,
+    ogroup,
     height,
     frames = 0,
     theHero;
+
+function OctoGroup() { //setting up enemies in the game
+    this.collection = [];
+
+    this.reset = function () { //removes all enemies
+        this.collection = [];
+    }
+
+    this.add = function () { //adds enemies
+        this.collection.push(new OctoRok());
+    }
+
+    this.update = function () {
+        if (frames % 100 === 0) { //this makes it add an enemy every 100 frames
+            this.add();
+        }
+
+        for(var i = 0, len = this.collection.length; i < len; i++) {
+            var octoRok = this.collection[i];
+
+            if (i === 0) {
+                octoRok.detectCollision();
+            }
+
+            octoRok.x -= 2; //travelling -x
+            if (octoRok.x < -octoRok.width) {
+                this.collection.splice(i, 1); //this will remove the enemy
+                i--;
+                len--;
+            }
+        }
+    }
+    
+    this.draw = function () {
+        for (var i = 0, len = this.collection.length; i < len; i++) {
+            
+            var octoRok = this.collection[i];
+            octoRok.draw();
+        }
+    }
+}
+
+function OctoRok () {
+    this.x = 400;
+    this.y = 340;
+    this.width = 45;
+    this.height = 55;
+    
+    this.detectCollision = function () {
+        if (this.x === (theHero.x + theHero.width)) {
+            console.log("you're dead");
+            currentState = states.score;
+            document.getElementById("resetbtn").style.display = "block";
+        }
+
+        this.draw = function () {
+            octoRokSprite.draw(renderingContext, this.x, this.y);
+        }
+    }
+}
 
 
 var states = {
@@ -33,6 +94,8 @@ var states = {
 function Hero() {
     this.x = 120; //setting where character is on screen
     this.y = 180;
+    this.width = 45;
+    this.height = 55;
 
     this.frame = 0;
     this.velocity = 0;
@@ -42,13 +105,15 @@ function Hero() {
 
     this.gravity = 0.25;
     this.jumpHeight = 4.6;
-    // this.jumpCount = 2;
+    this.jumpCount = 2;
 
     this.jump = function () {
-        // if(this.jumpCount > 0) {
-        //
-        // }
-        this.velocity = -this.jumpHeight;
+        if (this.jumpCount > 0) {
+            this.velocity = -this.jumpHeight;
+            this.jumpCount --;
+        }
+
+        //this.velocity = -this.jumpHeight; this breaks double jump for some reason
     };
 
     this.update = function() {
@@ -77,6 +142,7 @@ function Hero() {
 
             if (this.y >= 180) {
                 this.y = 180;//the -10 accounts for empty spaces beneath the sprite. this checks to see if the character has hit the ground and they stay there
+                this.jumpCount = 2;
                 this.velocity = this.jumpHeight;
             }
 
@@ -107,7 +173,13 @@ function main() { //check window size and set it
 
     document.body.appendChild(canvas);
     loadGraphics(); //actually draw graphics
+    ogroup = new OctoGroup();
     theHero = new Hero(); //declared above as a public class
+}
+
+function resetgame() {
+    ogroup.reset();
+    currentState = states.splash;
 }
 
 function windowSetup() {
@@ -120,6 +192,7 @@ function windowSetup() {
     else {
         width = 400;
         height = 430;
+        inputEvent = "mousedown";
     }
 
     document.addEventListener("mousedown", onpress);
@@ -152,7 +225,7 @@ function loadGraphics() {
     img.src = "linkSheet.png";
     img.onload = function () {
         initSprites(this);
-        renderingContext.fillStyle = "#8BE4DF";
+        renderingContext.fillStyle = "#3db0dd";
         renderingContext.fillRect(0, 0, width, height);
 
         // link.draw(renderingContext, 100, 100);
@@ -170,11 +243,17 @@ function gameLoop() {
 
 function update() { //game ticker, allows the clock to "count up"
     frames++; //counter
+    if (currentState = states.game) {
+        ogroup.update();
+    }
     theHero.update(); //updates character after input
     //console.log(frames);
 }
 
 function render() { //draw everything
     renderingContext.fillRect(0, 0, width, height);
+    backgroundSprite.draw(renderingContext, 0, 200);
+    //octoRokSprite.draw(renderingContext, 220, 340);
+    ogroup.draw(renderingContext);
     theHero.draw(renderingContext);
 }
