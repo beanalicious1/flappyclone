@@ -22,7 +22,8 @@ var currentState,
     ogroup,
     height,
     frames = 0,
-    theHero;
+    theHero,
+    score = 0;
 
 function OctoGroup() { //setting up enemies in the game
     this.collection = [];
@@ -36,7 +37,7 @@ function OctoGroup() { //setting up enemies in the game
     }
 
     this.update = function () {
-        if (frames % 100 === 0) { //this makes it add an enemy every 100 frames
+        if (frames %  100 === 0 && currentState === states.game) { //this makes it add an enemy every 100 frames
             this.add();
         }
 
@@ -44,44 +45,58 @@ function OctoGroup() { //setting up enemies in the game
             var octoRok = this.collection[i];
 
             if (i === 0) {
-                octoRok.detectCollision();
+                if(octoRok.detectCollision())
+                {
+                    break;
+                }
             }
 
             octoRok.x -= 2; //travelling -x
-            if (octoRok.x < -octoRok.width) {
+            if (octoRok.x + octoRok.width < 0) {
                 this.collection.splice(i, 1); //this will remove the enemy
                 i--;
                 len--;
+                score++;
             }
         }
-    }
+    };
     
-    this.draw = function () {
-        for (var i = 0, len = this.collection.length; i < len; i++) {
+    this.draw = function (renderingContext) {
+        for (var i = 0; i < this.collection.length; i++) {
             
             var octoRok = this.collection[i];
-            octoRok.draw();
+            octoRok.draw(renderingContext);
         }
-    }
+    };
 }
+
+
 
 function OctoRok () {
     this.x = 400;
-    this.y = 340;
+    this.y = 380;
     this.width = 45;
-    this.height = 55;
+    this.height = 30;
     
     this.detectCollision = function () {
-        if (this.x === (theHero.x + theHero.width)) {
+        if (detectCollision (theHero, this)) {
             console.log("you're dead");
-            currentState = states.score;
-            document.getElementById("resetbtn").style.display = "block";
+            gameOver();
+            return true;
         }
+        return false;
+    }
 
-        this.draw = function () {
+        this.draw = function (renderingContext) {
             octoRokSprite.draw(renderingContext, this.x, this.y);
         }
-    }
+}
+
+
+function detectCollision(hero, oct) {
+    var heightDect = oct.y - (hero.y + hero.height) - 160 <= 0;
+    var leftDect = hero.x <= oct.x && oct.x <= hero.x + hero.width;
+    return heightDect && leftDect;
 }
 
 
@@ -132,7 +147,7 @@ function Hero() {
 
     };
         this.updateIdleHero = function () {
-        //this.y = 300;
+        this.y = 180;
     };
 
 
@@ -164,6 +179,15 @@ function Hero() {
 
 }
 
+function setHighScore()
+{
+    var highScore = localStorage.getItem("score");
+    if(highScore === null)
+    {
+        highScore = "0";
+    }
+    document.getElementById("highscore").innerText = highScore + " Is your highest score!";
+}
 
 
 function main() { //check window size and set it
@@ -172,14 +196,25 @@ function main() { //check window size and set it
     currentState = states.splash;
 
     document.body.appendChild(canvas);
+    setHighScore();
     loadGraphics(); //actually draw graphics
-    ogroup = new OctoGroup();
-    theHero = new Hero(); //declared above as a public class
+
+}
+
+function gameOver()
+{
+    resetgame();
+    currentState = states.score
 }
 
 function resetgame() {
     ogroup.reset();
-    currentState = states.splash;
+    frames = 0;
+    if(localStorage.getItem("score") < score)
+    {
+        localStorage.setItem("score", score);
+        setHighScore();
+    }
 }
 
 function windowSetup() {
@@ -201,8 +236,12 @@ function windowSetup() {
 function onpress(evt){ //this is for clicking the button and having an action (jump, etc) happens
 
     switch (currentState) {
+        case states.score:
+            resetgame();
+            currentState = states.game;
+            break;
         case states.splash:
-            theHero.jump();
+            resetgame();
             currentState = states.game;
             break;
         case states.game:
@@ -230,6 +269,8 @@ function loadGraphics() {
 
         // link.draw(renderingContext, 100, 100);
         //ganon.draw(renderingContext, 150, 100);
+        ogroup = new OctoGroup();
+        theHero = new Hero();
         gameLoop();
     };
 
@@ -242,11 +283,14 @@ function gameLoop() {
 }
 
 function update() { //game ticker, allows the clock to "count up"
-    frames++; //counter
-    if (currentState = states.game) {
+     //counter
+    frames++;
+    if (currentState === states.game) {
         ogroup.update();
     }
     theHero.update(); //updates character after input
+
+    document.getElementById("scorebox").innerText = score + " is your current score!";
     //console.log(frames);
 }
 
@@ -256,4 +300,19 @@ function render() { //draw everything
     //octoRokSprite.draw(renderingContext, 220, 340);
     ogroup.draw(renderingContext);
     theHero.draw(renderingContext);
+
+    if (currentState === states.splash) {
+        renderingContext.save();
+        renderingContext.fillStyle = "rgb(00,00,00)";
+        renderingContext.fillText("Jump by clicking. Double jumping encouraged!", canvas.width / 2, canvas.height / 2);
+        renderingContext.fillText("Click to start!", canvas.width / 2, canvas.height * 2 / 3);
+        renderingContext.restore();
+    }
+    if (currentState === states.score) {
+        renderingContext.save();
+        renderingContext.fillStyle = "rgb(00,00,00)";
+        renderingContext.fillText("Better luck next time", canvas.width / 2, canvas.height / 2);
+        renderingContext.fillText("Clicky Clickaroo!", canvas.width / 2, canvas.height * 2 / 3);
+        renderingContext.restore();
+    }
 }
